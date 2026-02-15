@@ -1,11 +1,21 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Language, PrayerTime } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Helper to safely get the API instance
+// We initialize this inside functions to prevent top-level crashes on Vercel/Netlify
+// if process.env is undefined during module loading.
+const getAIClient = () => {
+  // Safe access to process.env for browser environments
+  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
+    ? process.env.API_KEY 
+    : '';
+  
+  return new GoogleGenAI({ apiKey });
+};
 
 export const getSpiritualInsight = async (lang: Language): Promise<string> => {
   try {
+    const ai = getAIClient();
     const model = 'gemini-3-flash-preview';
     const prompt = lang === 'bn' 
       ? "রমজান এবং আত্মশুদ্ধি সম্পর্কে একটি ছোট, অনুপ্রেরণামূলক ইসলামিক উক্তি বা উপদেশ দিন (৩০ শব্দের মধ্যে)। বাংলা ভাষায় লিখুন।"
@@ -29,6 +39,7 @@ export const getSpiritualInsight = async (lang: Language): Promise<string> => {
 
 export const parseCalendarText = async (text: string): Promise<PrayerTime[]> => {
   try {
+    const ai = getAIClient();
     const model = 'gemini-3-flash-preview';
     const prompt = `
       You are a data extraction assistant. I will provide raw text containing a Ramadan calendar schedule. 
