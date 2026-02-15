@@ -6,8 +6,34 @@
     <title>Avex Ramadan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
     <script>
-      // Polyfill for process to prevent crashes in libraries that expect a Node.js environment
+      // Global Error Handler to catch startup crashes
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Critical Error:", message, source, lineno, colno, error);
+        const root = document.getElementById('root');
+        
+        // Show error on screen if app hasn't loaded
+        if (root && (!root.innerHTML || root.innerHTML === '')) {
+           document.body.innerHTML = `
+             <div style="background-color: #09090b; color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; padding: 20px; text-align: center;">
+               <div style="background: #18181b; padding: 30px; border-radius: 20px; border: 1px solid #27272a; max-width: 600px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                 <h2 style="color: #ef4444; font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">Application Error</h2>
+                 <p style="color: #e4e4e7; margin-bottom: 1.5rem; line-height: 1.6;">It seems something went wrong while loading the app.</p>
+                 <div style="background: #000; padding: 15px; border-radius: 10px; overflow-x: auto; text-align: left; margin-bottom: 20px; border: 1px solid #3f3f46;">
+                    <code style="color: #f87171; font-size: 0.85rem; font-family: monospace;">${message}</code>
+                    <div style="margin-top: 5px; color: #71717a; font-size: 0.75rem;">${source}:${lineno}</div>
+                 </div>
+                 <button onclick="window.location.reload()" style="background: #84cc16; color: #000; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                   Reload Application
+                 </button>
+               </div>
+             </div>
+           `;
+        }
+      };
+
+      // Polyfill for process
       window.process = {
         env: { API_KEY: 'AIzaSyA65rIwRWJjU9dDJv27prIVq5fCb6RqYBM' },
         version: '',
@@ -21,10 +47,11 @@
           extend: {
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
+              serif: ['Amiri', 'serif'],
             },
             colors: {
               lime: {
-                450: '#A3E635', // Custom vibrant lime
+                450: '#A3E635', 
               }
             },
             animation: {
@@ -48,7 +75,6 @@
         background-color: #09090b;
         color: #fff;
       }
-      /* Custom scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
       }
@@ -62,6 +88,17 @@
       ::-webkit-scrollbar-thumb:hover {
         background: #52525b; 
       }
+      /* Custom utility for scrollbar hiding */
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(24, 24, 27, 0.5);
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(63, 63, 70, 0.8);
+        border-radius: 10px;
+      }
     </style>
   <script type="importmap">
 {
@@ -70,10 +107,10 @@
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
     "react-dom": "https://esm.sh/react-dom@18.2.0",
     "@google/genai": "https://esm.sh/@google/genai@0.1.2",
-    "lucide-react": "https://esm.sh/lucide-react@0.263.1",
+    "lucide-react": "https://esm.sh/lucide-react@0.263.1?deps=react@18.2.0,react-dom@18.2.0",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/"
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
   }
 }
 </script>

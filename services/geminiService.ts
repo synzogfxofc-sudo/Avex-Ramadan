@@ -4,19 +4,8 @@ import { Language, PrayerTime } from "../types";
 // Helper to safely get the API instance
 // We initialize this inside functions to prevent top-level crashes
 const getAIClient = () => {
-  // Safe access to process.env for browser environments
-  const envKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
-    ? process.env.API_KEY 
-    : '';
-    
-  // Fallback to the hardcoded key if the environment variable polyfill doesn't work as expected
-  const apiKey = envKey || 'AIzaSyA65rIwRWJjU9dDJv27prIVq5fCb6RqYBM';
-  
-  if (!apiKey) {
-    console.warn("API Key is missing. Ensure process.env.API_KEY is available.");
-  }
-
-  return new GoogleGenAI({ apiKey: apiKey || 'dummy_key_to_prevent_crash' });
+  // The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 export const getSpiritualInsight = async (lang: Language): Promise<string> => {

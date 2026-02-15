@@ -90,19 +90,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onUpdateSchedu
     
     setIsProcessingAI(true);
     setError(null);
+    setSuccess(null);
     
     try {
       const parsedSchedule = await parseCalendarText(importText);
-      if (parsedSchedule && parsedSchedule.length > 0) {
+      
+      if (parsedSchedule && Array.isArray(parsedSchedule) && parsedSchedule.length > 0) {
         setLocalSchedule(parsedSchedule);
         setSuccess(`Successfully imported ${parsedSchedule.length} days!`);
         setViewMode('list');
         setImportText("");
       } else {
-        setError("AI could not find any valid schedule data.");
+        throw new Error("Could not parse the provided text into a valid schedule.");
       }
     } catch (err: any) {
-      setError(err.message || "Failed to process text.");
+      console.error("AI Import Error:", err);
+      let errorMsg = err.message || "Failed to process text.";
+      
+      // Catch specific errors to provide better user feedback
+      if (
+        errorMsg.toLowerCase().includes("json") || 
+        errorMsg.toLowerCase().includes("syntax") ||
+        errorMsg.includes("Unexpected token")
+      ) {
+        errorMsg = "Invalid data format returned by AI. Could not parse the provided text.";
+      } else if (errorMsg.includes("structure") || errorMsg.includes("array")) {
+        errorMsg = "AI returned invalid structure. Please try again with clearer text.";
+      }
+
+      setError(errorMsg);
     } finally {
       setIsProcessingAI(false);
     }
