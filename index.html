@@ -7,8 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
-      // Polyfill for process.env to prevent crashes on Vercel/Netlify
-      window.process = window.process || { env: { API_KEY: '' } };
+      // Polyfill for process to prevent crashes in libraries that expect a Node.js environment
+      window.process = {
+        env: { API_KEY: '' },
+        version: '',
+        versions: {},
+        platform: 'browser',
+        browser: true
+      };
 
       tailwind.config = {
         theme: {
@@ -63,11 +69,11 @@
     "react": "https://esm.sh/react@18.2.0",
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
     "react-dom": "https://esm.sh/react-dom@18.2.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.1.2",
     "lucide-react": "https://esm.sh/lucide-react@0.263.1",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/"
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
   }
 }
 </script>

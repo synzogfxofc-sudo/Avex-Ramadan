@@ -2,8 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Language, PrayerTime } from "../types";
 
 // Helper to safely get the API instance
-// We initialize this inside functions to prevent top-level crashes on Vercel/Netlify
-// if process.env is undefined during module loading.
+// We initialize this inside functions to prevent top-level crashes
 const getAIClient = () => {
   // Safe access to process.env for browser environments
   const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
@@ -11,10 +10,12 @@ const getAIClient = () => {
     : '';
   
   if (!apiKey) {
-    console.warn("API Key is missing in process.env.API_KEY");
+    console.warn("API Key is missing. Ensure process.env.API_KEY is available.");
   }
 
-  return new GoogleGenAI({ apiKey });
+  // Use the safe key or fallback to prevent constructor crash if empty string is strictly forbidden
+  // (Though SDK usually handles empty string by failing auth later)
+  return new GoogleGenAI({ apiKey: apiKey || 'dummy_key_to_prevent_crash' });
 };
 
 export const getSpiritualInsight = async (lang: Language): Promise<string> => {
@@ -97,7 +98,13 @@ export const parseCalendarText = async (text: string): Promise<PrayerTime[]> => 
     // Remove markdown code blocks if present (e.g., ```json ... ```)
     jsonText = jsonText.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
 
-    const parsed = JSON.parse(jsonText);
+    // Try parsing
+    let parsed;
+    try {
+        parsed = JSON.parse(jsonText);
+    } catch (e) {
+        throw new Error("AI returned invalid JSON format.");
+    }
     
     if (!Array.isArray(parsed)) {
       throw new Error("AI returned invalid structure (not an array)");
