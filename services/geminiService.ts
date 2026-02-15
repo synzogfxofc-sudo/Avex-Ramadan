@@ -5,16 +5,17 @@ import { Language, PrayerTime } from "../types";
 // We initialize this inside functions to prevent top-level crashes
 const getAIClient = () => {
   // Safe access to process.env for browser environments
-  const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
+  const envKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) 
     ? process.env.API_KEY 
     : '';
+    
+  // Fallback to the hardcoded key if the environment variable polyfill doesn't work as expected
+  const apiKey = envKey || 'AIzaSyA65rIwRWJjU9dDJv27prIVq5fCb6RqYBM';
   
   if (!apiKey) {
     console.warn("API Key is missing. Ensure process.env.API_KEY is available.");
   }
 
-  // Use the safe key or fallback to prevent constructor crash if empty string is strictly forbidden
-  // (Though SDK usually handles empty string by failing auth later)
   return new GoogleGenAI({ apiKey: apiKey || 'dummy_key_to_prevent_crash' });
 };
 

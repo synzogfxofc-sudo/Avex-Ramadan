@@ -338,10 +338,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onUpdateSchedu
                   <button 
                     onClick={() => setViewMode('import')}
                     className="p-2.5 bg-lime-500/10 text-lime-400 rounded-xl hover:bg-lime-500/20 transition-colors flex items-center gap-2"
-                    title="AI Import"
+                    title="Update with AI"
                   >
                     <Sparkles className="w-4 h-4" />
-                    <span className="text-xs font-bold hidden sm:inline">AI Import</span>
+                    <span className="text-xs font-bold hidden sm:inline">Update with AI</span>
                   </button>
                   <button 
                     onClick={handleResetToDhaka}
