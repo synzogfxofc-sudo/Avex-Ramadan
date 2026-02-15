@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { PrayerTime, NotificationSettings } from '../types';
 
 // Project Details
@@ -6,7 +6,16 @@ const PROJECT_ID = 'qxrwolmqlikfsasnskmb';
 const SUPABASE_URL = `https://${PROJECT_ID}.supabase.co`;
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4cndvbG1xbGlrZnNhc25za21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDA0MjcsImV4cCI6MjA4NjY3NjQyN30.C-9en7Utf0v88cI-8IPHsVIheSCCu5ucDGUI8EcF34c';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// Singleton instance
+let supabaseInstance: SupabaseClient | null = null;
+
+// Lazy initialize Supabase
+const getSupabase = (): SupabaseClient => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+  return supabaseInstance;
+};
 
 export interface UserData {
   completedDays: number[];
@@ -27,6 +36,7 @@ export const DEFAULT_USER_DATA: UserData = {
 // 1. Get Global Schedule (Admin Updates)
 export const fetchGlobalSchedule = async (): Promise<PrayerTime[] | null> => {
   try {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from('schedules')
       .select('active_schedule')
@@ -52,6 +62,7 @@ export const fetchGlobalSchedule = async (): Promise<PrayerTime[] | null> => {
 // 2. Update Global Schedule (Admin Action)
 export const updateGlobalSchedule = async (schedule: PrayerTime[]): Promise<boolean> => {
   try {
+    const supabase = getSupabase();
     // We update the row with ID 1, or insert if missing
     const { error } = await supabase
       .from('schedules')
@@ -68,6 +79,7 @@ export const updateGlobalSchedule = async (schedule: PrayerTime[]): Promise<bool
 // 3. Get User Profile
 export const fetchUserProfile = async (username: string): Promise<UserData | null> => {
   try {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from('profiles')
       .select('data')
@@ -93,6 +105,7 @@ export const fetchUserProfile = async (username: string): Promise<UserData | nul
 // 4. Create or Update User Profile
 export const updateUserProfile = async (username: string, userData: UserData): Promise<boolean> => {
   try {
+    const supabase = getSupabase();
     const { error } = await supabase
       .from('profiles')
       .upsert({ 
