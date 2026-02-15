@@ -10,6 +10,10 @@ const getAIClient = () => {
     ? process.env.API_KEY 
     : '';
   
+  if (!apiKey) {
+    console.warn("API Key is missing in process.env.API_KEY");
+  }
+
   return new GoogleGenAI({ apiKey });
 };
 
@@ -41,27 +45,40 @@ export const parseCalendarText = async (text: string): Promise<PrayerTime[]> => 
   try {
     const ai = getAIClient();
     const model = 'gemini-3-flash-preview';
+    
+    // Improved Prompt to handle Bengali and structure better
     const prompt = `
-      You are a data extraction assistant. I will provide raw text containing a Ramadan calendar schedule. 
-      Your task is to extract the prayer times and return them as a valid JSON array.
-      
-      The input text might be unstructured, from a PDF, Excel, or website copy-paste.
-      
-      Required JSON Structure for each object in the array:
-      - day: number (1 to 30)
-      - date: string (Format: "Thu Feb 27 2025" or similar readable date string. Try to infer the year if missing, assume current/upcoming Ramadan).
-      - sehri: string (Format: "HH:MM" in 24-hour format. This corresponds to Fajr end or Sehri end).
-      - dhuhr: string (Format: "HH:MM" in 24-hour format).
-      - asr: string (Format: "HH:MM" in 24-hour format).
-      - iftar: string (Format: "HH:MM" in 24-hour format. This corresponds to Maghrib).
-      - isha: string (Format: "HH:MM" in 24-hour format).
+      You are an advanced data extraction assistant.
+      The user has pasted text representing a Ramadan Calendar schedule.
+      It might be in English or Bengali (Bangla). The text could be unstructured.
 
-      Rules:
-      1. If specific prayers (Dhuhr, Asr, Isha) are missing in the text, estimate them logically based on Sehri/Iftar or leave them as empty strings "", but Sehri and Iftar are MANDATORY.
-      2. Convert all times to 24-hour format (e.g., 04:30, 18:45).
-      3. Return ONLY the JSON array. Do not include markdown formatting like \`\`\`json.
-      
-      Input Text:
+      YOUR TASK:
+      1. Extract the schedule rows (Day, Date, Sehri Time, Iftar Time, etc.).
+      2. Convert any Bengali numerals (০-৯) to English numerals (0-9).
+      3. Return a clean JSON array.
+
+      REQUIRED JSON STRUCTURE:
+      [
+        {
+          "day": 1,
+          "date": "Fri Mar 01 2025", 
+          "sehri": "04:55",
+          "dhuhr": "12:15", 
+          "asr": "15:30",
+          "iftar": "18:05",
+          "isha": "19:20"
+        }
+      ]
+
+      RULES:
+      - Date: Try to infer the full date. If year is missing, assume current/upcoming Ramadan (e.g., 2025). Format: "Fri Mar 01 2025".
+      - Times: Must be in 24-hour format (HH:MM). Example: 04:30, 18:15.
+      - "Sehri" corresponds to Fajr End/Sehri End.
+      - "Iftar" corresponds to Maghrib Start.
+      - If Dhuhr/Asr/Isha are missing, leave them as empty strings "" or estimate them if the text implies a standard gap. Sehri and Iftar are MANDATORY.
+      - Return ONLY the JSON array. Do not include markdown code blocks.
+
+      INPUT TEXT:
       "${text}"
     `;
 
@@ -73,12 +90,34 @@ export const parseCalendarText = async (text: string): Promise<PrayerTime[]> => 
       }
     });
 
-    const jsonText = response.text?.trim();
-    if (!jsonText) throw new Error("No data returned from AI");
+    // Clean up potential markdown if responseMimeType didn't catch it
+    let jsonText = response.text?.trim();
+    if (!jsonText) throw new Error("Empty response from AI");
     
-    return JSON.parse(jsonText) as PrayerTime[];
-  } catch (error) {
+    // Remove markdown code blocks if present (e.g., ```json ... ```)
+    jsonText = jsonText.replace(/^```json\s*/, '').replace(/^```\s*/, '').replace(/```$/, '');
+
+    const parsed = JSON.parse(jsonText);
+    
+    if (!Array.isArray(parsed)) {
+      throw new Error("AI returned invalid structure (not an array)");
+    }
+    
+    return parsed as PrayerTime[];
+
+  } catch (error: any) {
     console.error("AI Parse Error:", error);
-    throw new Error("Failed to parse schedule. Please ensure the text contains dates and times.");
+    
+    let errorMessage = "Failed to parse schedule.";
+    
+    if (error.message) {
+      if (error.message.includes("API_KEY")) errorMessage = "API Key Invalid or Missing.";
+      else if (error.message.includes("403")) errorMessage = "API Key Permission Denied (403).";
+      else if (error.message.includes("400")) errorMessage = "Bad Request to AI Model (400).";
+      else if (error.message.includes("JSON")) errorMessage = "AI returned invalid data format.";
+      else errorMessage = error.message;
+    }
+    
+    throw new Error(errorMessage);
   }
 };
