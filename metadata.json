@@ -1,0 +1,7 @@
+{
+  "name": "Avex Ramadan",
+  "description": "A modern, aesthetic Ramadan companion app designed by Tahsin Rijon.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
